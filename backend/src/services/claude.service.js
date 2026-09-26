@@ -61,16 +61,22 @@ Competitors the founder already knows: ${b.knownCompetitors || 'none given'}`;
 
 // Step 1: turn the idea into a research plan (search queries).
 export function planResearch(business) {
+  const loc = business.location?.trim();
+  const localityRule = loc
+    ? `This is a LOCAL business based in "${loc}". Every single search query must include that exact place name (city/area), e.g. "best X in ${loc}", "X near ${loc}", "X ${loc}". Do NOT write generic national or worldwide queries, and do NOT search for brands outside "${loc}" - a customer here would not travel elsewhere or order internationally for this kind of business.`
+    : `No specific location was given, so search broadly for this category.`;
+
   return askJson(
     `${businessBlock(business)}
 
-Create a research plan to find this business's competitors in its home market AND internationally.
+Create a research plan to find this business's REAL, LOCAL competitors.
+${localityRule}
 Return JSON:
 {
   "category": "short product/service category",
   "industry": "industry name",
   "customerProfile": "one sentence on the most likely buyer",
-  "searchQueries": ["8 Google queries: mix of 'buy X online', 'best X brands', 'X manufacturer', 'X supplier', country-specific and international phrasings"]
+  "searchQueries": ["8 Google queries, all scoped to the business's own local area as described above"]
 }`,
     { maxTokens: 1200 }
   );
@@ -82,6 +88,11 @@ export function selectCompetitors(business, searchResults, maxCompetitors = 10) 
     .map((r, i) => `[${i}] ${r.title} | ${r.url} | ${r.description?.slice(0, 200)}`)
     .join('\n');
 
+  const loc = business.location?.trim();
+  const localityRule = loc
+    ? `This business only serves customers in "${loc}". ONLY pick competitors that genuinely operate in or deliver to "${loc}" - a real local outlet, branch, or confirmed delivery/service coverage there. EXCLUDE any brand that is only present elsewhere (other cities, other countries) with no real presence in "${loc}", even if it looks like a "big name" - it is not a real competitor for this founder if a customer in "${loc}" cannot actually buy from it. Set "region" to "home" for every one of these (they are all local by definition); only use "international" for a brand you're confident ships to or operates in "${loc}" from abroad.`
+    : `No specific location was given - prefer a mix of direct and indirect competitors, home-market and international.`;
+
   return askJson(
     `${businessBlock(business)}
 
@@ -91,14 +102,14 @@ ${compact}
 Pick up to ${maxCompetitors} real companies/brands that compete with this business.
 Rules: use each brand's own website (not Amazon/Flipkart/news/Wikipedia/research pages) when available;
 if a brand only appears on a marketplace, keep the marketplace URL and set "channel":"marketplace".
-Skip the business itself. Prefer a mix of direct and indirect, home-market and international.
+Skip the business itself. ${localityRule}
 Keep every field short - "why" is at most 8 words, no extra commentary anywhere.
 Return JSON:
 {
   "competitors": [
     { "name": "", "url": "", "type": "direct|indirect", "region": "home|international", "channel": "own-site|marketplace", "why": "max 8 words" }
   ],
-  "notInResults": ["well-known competitors you expected but did not see in the results (names only)"]
+  "notInResults": ["well-known LOCAL competitors you expected but did not see in the results (names only)"]
 }`,
     { maxTokens: 5000 }
   );
