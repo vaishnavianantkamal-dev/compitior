@@ -13,6 +13,7 @@ const postSchema = new mongoose.Schema(
 const articleSchema = new mongoose.Schema(
   {
     topic: { type: String, required: true, trim: true, maxlength: 300 },
+    contentType: { type: String, enum: ['article', 'post'], default: 'article' },
     analysisId: { type: mongoose.Schema.Types.ObjectId, ref: 'Analysis' },
     businessContext: { type: String, trim: true, maxlength: 4000 },
     status: { type: String, enum: ['done', 'failed'], default: 'done', index: true },

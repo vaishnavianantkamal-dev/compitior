@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Article from '../models/Article.js';
 import Analysis from '../models/Analysis.js';
-import { suggestTopics, writeArticle } from '../services/claude.service.js';
+import { suggestTopics, writeArticle, writePost } from '../services/claude.service.js';
 
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
@@ -18,7 +18,7 @@ export const topics = wrap(async (req, res) => {
 });
 
 export const list = wrap(async (req, res) => {
-  const docs = await Article.find({}, 'topic title status tags wordCount createdAt')
+  const docs = await Article.find({}, 'topic contentType title status tags wordCount createdAt')
     .sort({ createdAt: -1 })
     .limit(100)
     .lean();
@@ -34,7 +34,8 @@ export const getOne = wrap(async (req, res) => {
 
 export const create = wrap(async (req, res) => {
   const topic = typeof req.body.topic === 'string' ? req.body.topic.trim() : '';
-  if (!topic || topic.length < 5) throw httpError(400, 'Give the article a topic (at least 5 characters)');
+  if (!topic || topic.length < 5) throw httpError(400, 'Give it a topic (at least 5 characters)');
+  const contentType = req.body.contentType === 'post' ? 'post' : 'article';
 
   let analysisId;
   let businessContext = '';
@@ -47,10 +48,11 @@ export const create = wrap(async (req, res) => {
   }
 
   try {
-    const result = await writeArticle(topic, businessContext);
+    const result = contentType === 'post' ? await writePost(topic, businessContext) : await writeArticle(topic, businessContext);
     const content = result.content || '';
     const doc = await Article.create({
       topic,
+      contentType,
       analysisId,
       businessContext,
       status: 'done',
@@ -63,7 +65,7 @@ export const create = wrap(async (req, res) => {
     });
     res.status(201).json(doc);
   } catch (err) {
-    const doc = await Article.create({ topic, analysisId, businessContext, status: 'failed', error: err.message });
+    const doc = await Article.create({ topic, contentType, analysisId, businessContext, status: 'failed', error: err.message });
     res.status(502).json(doc);
   }
 });
@@ -79,9 +81,12 @@ export const remove = wrap(async (req, res) => {
 export const markdown = wrap(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, 'Article not found');
   const doc = await Article.findById(req.params.id);
-  if (!doc || doc.status !== 'done') throw httpError(400, 'Article is not ready');
+  if (!doc || doc.status !== 'done') throw httpError(400, 'Not ready');
   const slug = (doc.title || doc.topic).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const body = doc.contentType === 'post'
+    ? (doc.posts || []).map((p) => `## ${p.platform}\n\n${p.caption}\n\n${(p.hashtags || []).join(' ')}`).join('\n\n---\n\n')
+    : doc.content;
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${slug || 'article'}.md"`);
-  res.send(`# ${doc.title}\n\n${doc.content}`);
+  res.setHeader('Content-Disposition', `attachment; filename="${slug || 'content'}.md"`);
+  res.send(`# ${doc.title}\n\n${body}`);
 });

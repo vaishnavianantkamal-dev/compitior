@@ -207,3 +207,28 @@ Avoid health or medical cure claims.`,
     { maxTokens: 6000 }
   );
 }
+
+// Content Studio: write just a batch of standalone social posts (no full article) for one topic.
+export function writePost(topic, businessContext = '') {
+  return askJson(
+    `Write 3 short, ready-to-publish social media posts about this topic.
+
+TOPIC: ${topic}
+${businessContext ? `\nWrite these for/about the following business:\n${businessContext}\n` : '\nGeneral business/startup audience - no specific company to promote.\n'}
+
+One post each for Instagram, LinkedIn and X. Each should stand alone (not require reading an article), be specific and punchy, and fit that platform's tone and length.
+
+Return JSON:
+{
+  "title": "a short internal label for this batch, a few words",
+  "tags": ["3-6 relevant tags"],
+  "posts": [
+    { "platform": "instagram", "goal": "", "caption": "", "hashtags": [""] },
+    { "platform": "linkedin", "goal": "", "caption": "", "hashtags": [""] },
+    { "platform": "x", "goal": "", "caption": "", "hashtags": [""] }
+  ]
+}
+Avoid health or medical cure claims.`,
+    { maxTokens: 1500 }
+  );
+}

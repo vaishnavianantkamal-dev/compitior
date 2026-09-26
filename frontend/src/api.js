@@ -31,7 +31,7 @@ export const api = {
   updateConfig: (fields) => request('/config', { method: 'POST', body: fields }),
   suggestTopics: (seed) => request('/content/topics', { method: 'POST', body: { seed } }),
   listArticles: () => request('/content/articles'),
-  createArticle: (topic, analysisId) => request('/content/articles', { method: 'POST', body: { topic, analysisId } }),
+  createArticle: (topic, analysisId, contentType = 'article') => request('/content/articles', { method: 'POST', body: { topic, analysisId, contentType } }),
   getArticle: (id) => request(`/content/articles/${id}`),
   removeArticle: (id) => request(`/content/articles/${id}`, { method: 'DELETE' }),
   articleMarkdownUrl: (id) => `/api/content/articles/${id}/markdown`,

@@ -23,19 +23,21 @@ export default function ArticleView() {
   }
 
   if (error) return <p className="notice risk">{error}</p>;
-  if (!doc) return <p className="empty">Loading article…</p>;
+  if (!doc) return <p className="empty">Loading…</p>;
+
+  const isPost = doc.contentType === 'post';
 
   return (
     <div className="report">
       <div className="toolbar">
-        <Link to="/content" className="btn ghost"><ArrowLeft size={15} /> All articles</Link>
+        <Link to="/content" className="btn ghost"><ArrowLeft size={15} /> All content</Link>
         <a className="btn ghost" href={api.articleMarkdownUrl(id)}><Download size={15} /> Download .md</a>
         <button className="btn ghost danger" onClick={remove}><Trash2 size={15} /> Delete</button>
       </div>
 
       <section className="hero">
         <div>
-          <p className="muted">{formatDate(doc.createdAt)}{doc.wordCount ? ` · ${doc.wordCount} words` : ''}</p>
+          <p className="muted">{formatDate(doc.createdAt)}{!isPost && doc.wordCount ? ` · ${doc.wordCount} words` : ''}</p>
           <h1>{doc.title}</h1>
           {doc.metaDescription && <p className="summary">{doc.metaDescription}</p>}
           {doc.tags?.length > 0 && (
@@ -46,26 +48,35 @@ export default function ArticleView() {
         </div>
       </section>
 
-      <div className="report-layout">
-        <div className="report-main">
-          <section className="block">
-            <Markdown text={doc.content} />
-          </section>
+      {isPost ? (
+        <section className="block">
+          <h2>Posts</h2>
+          <div className="posts">
+            {doc.posts?.map((p, i) => <PostCard key={i} post={p} index={i} canPublish={false} />)}
+          </div>
+        </section>
+      ) : (
+        <div className="report-layout">
+          <div className="report-main">
+            <section className="block">
+              <Markdown text={doc.content} />
+            </section>
+          </div>
+          {doc.posts?.length > 0 && (
+            <aside className="report-side">
+              <h2 className="side-title">Suggestions</h2>
+              <div className="suggestions-panel">
+                <section className="side-block">
+                  <header className="side-head"><Send size={16} /><h3>Posts to promote this</h3></header>
+                  <div className="posts posts-stack">
+                    {doc.posts.map((p, i) => <PostCard key={i} post={p} index={i} canPublish={false} />)}
+                  </div>
+                </section>
+              </div>
+            </aside>
+          )}
         </div>
-        {doc.posts?.length > 0 && (
-          <aside className="report-side">
-            <h2 className="side-title">Suggestions</h2>
-            <div className="suggestions-panel">
-              <section className="side-block">
-                <header className="side-head"><Send size={16} /><h3>Posts to promote this</h3></header>
-                <div className="posts posts-stack">
-                  {doc.posts.map((p, i) => <PostCard key={i} post={p} index={i} canPublish={false} />)}
-                </div>
-              </section>
-            </div>
-          </aside>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { PenSquare, Sparkles, Wand2, FileText, Trash2, ArrowRight, Loader2 } from 'lucide-react';
+import { PenSquare, Sparkles, Wand2, FileText, Send, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '../api.js';
 import { formatDate } from '../utils.js';
 
 export default function Content() {
   const { analyses } = useOutletContext();
+  const [contentType, setContentType] = useState('article');
   const [seed, setSeed] = useState('');
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -14,8 +15,10 @@ export default function Content() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [articles, setArticles] = useState(null);
+  const [listFilter, setListFilter] = useState('all');
 
   const doneAnalyses = analyses.filter((a) => a.status === 'done');
+  const isPost = contentType === 'post';
 
   function loadArticles() {
     api.listArticles().then(setArticles).catch(() => setArticles([]));
@@ -42,7 +45,7 @@ export default function Content() {
     setGenerating(true);
     setError('');
     try {
-      await api.createArticle(topic.trim(), analysisId || undefined);
+      await api.createArticle(topic.trim(), analysisId || undefined, contentType);
       setTopic('');
       loadArticles();
     } catch (err) {
@@ -57,8 +60,16 @@ export default function Content() {
       <div className="page-head">
         <div>
           <span className="pill"><PenSquare size={13} /> Content Studio</span>
-          <h1 className="page-title">Write a full article</h1>
-          <p className="muted">Get topic ideas, then generate a complete long-form article with matching social posts.</p>
+          <h1 className="page-title">{isPost ? 'Write a social post' : 'Write a full article'}</h1>
+          <p className="muted">
+            {isPost
+              ? 'Get topic ideas, then generate a standalone Instagram/LinkedIn/X post — no full article needed.'
+              : 'Get topic ideas, then generate a complete long-form article with matching social posts.'}
+          </p>
+        </div>
+        <div className="segmented">
+          <button type="button" className={`seg ${contentType === 'article' ? 'active' : ''}`} onClick={() => setContentType('article')}>Article</button>
+          <button type="button" className={`seg ${contentType === 'post' ? 'active' : ''}`} onClick={() => setContentType('post')}>Post</button>
         </div>
       </div>
 
@@ -92,16 +103,19 @@ export default function Content() {
 
       <section className="card form-card">
         <header className="card-head">
-          <span className="card-icon"><FileText size={18} /></span>
+          <span className="card-icon">{isPost ? <Send size={18} /> : <FileText size={18} />}</span>
           <div>
-            <h2>Generate the article</h2>
+            <h2>{isPost ? 'Generate the post' : 'Generate the article'}</h2>
             <p className="muted">Pick a topic above, type your own, or write about one of your analyzed businesses.</p>
           </div>
         </header>
         <form onSubmit={generate} className="intake-form">
           <label className="field wide">
-            <span>Topic</span>
-            <textarea rows={2} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. How AI can help test a business idea" required minLength={5} />
+            <span>{isPost ? 'What is the post about?' : 'Topic'}</span>
+            <textarea
+              rows={2} value={topic} onChange={(e) => setTopic(e.target.value)} required minLength={5}
+              placeholder={isPost ? 'e.g. We just launched our new Thai iced coffee menu' : 'e.g. How AI can help test a business idea'}
+            />
           </label>
           {doneAnalyses.length > 0 && (
             <label className="field wide">
@@ -115,22 +129,30 @@ export default function Content() {
           {error && <p className="notice risk wide">{error}</p>}
           <div className="wide">
             <button type="submit" className="btn primary lg" disabled={generating}>
-              {generating ? <Loader2 size={16} className="spin" /> : <PenSquare size={16} />} {generating ? 'Writing… this takes 20-40s' : 'Generate article'}
+              {generating ? <Loader2 size={16} className="spin" /> : (isPost ? <Send size={16} /> : <PenSquare size={16} />)}
+              {generating ? (isPost ? 'Writing… this takes ~10s' : 'Writing… this takes 20-40s') : (isPost ? 'Generate post' : 'Generate article')}
             </button>
           </div>
         </form>
       </section>
 
       <div className="recent-head">
-        <h2>Your articles</h2>
+        <h2>Your content</h2>
+      </div>
+      <div className="filter-row">
+        <button type="button" className={`filter-pill ${listFilter === 'all' ? 'active' : ''}`} onClick={() => setListFilter('all')}>All</button>
+        <button type="button" className={`filter-pill ${listFilter === 'article' ? 'active' : ''}`} onClick={() => setListFilter('article')}>Articles</button>
+        <button type="button" className={`filter-pill ${listFilter === 'post' ? 'active' : ''}`} onClick={() => setListFilter('post')}>Posts</button>
       </div>
       {articles === null ? (
         <p className="empty">Loading…</p>
       ) : articles.length === 0 ? (
-        <p className="empty">No articles yet — generate your first one above.</p>
+        <p className="empty">Nothing here yet — generate your first one above.</p>
       ) : (
         <div className="card-grid">
-          {articles.map((a) => <ArticleCard key={a._id} article={a} onChanged={loadArticles} />)}
+          {articles.filter((a) => listFilter === 'all' || (a.contentType || 'article') === listFilter).map((a) => (
+            <ArticleCard key={a._id} article={a} onChanged={loadArticles} />
+          ))}
         </div>
       )}
     </div>
@@ -138,6 +160,8 @@ export default function Content() {
 }
 
 function ArticleCard({ article, onChanged }) {
+  const isPost = article.contentType === 'post';
+
   async function remove(e) {
     e.preventDefault();
     if (!confirm(`Delete "${article.title || article.topic}"?`)) return;
@@ -148,12 +172,15 @@ function ArticleCard({ article, onChanged }) {
   return (
     <article className="a-card">
       <div className="a-card-top">
-        <span className="a-thumb" style={{ background: 'linear-gradient(150deg, #1f6b45, #123524)' }}>
-          <FileText size={18} />
+        <span className="a-thumb" style={{ background: isPost ? 'linear-gradient(150deg, #2f5fd6, #16305e)' : 'linear-gradient(150deg, #1f6b45, #123524)' }}>
+          {isPost ? <Send size={18} /> : <FileText size={18} />}
         </span>
         <div className="a-card-title">
           <strong>{article.title || article.topic}</strong>
-          <span className="muted a-card-line">{article.wordCount ? `${article.wordCount} words` : article.status === 'failed' ? 'Generation failed' : ''}</span>
+          <span className="muted a-card-line">
+            {isPost ? 'Social post' : article.wordCount ? `${article.wordCount} words` : ''}
+            {article.status === 'failed' ? ' · Generation failed' : ''}
+          </span>
         </div>
         <span className="a-card-date muted">{formatDate(article.createdAt)}</span>
         <button type="button" className="icon-btn sm" onClick={remove} aria-label="Delete"><Trash2 size={16} /></button>
@@ -167,7 +194,7 @@ function ArticleCard({ article, onChanged }) {
         <p className="notice risk">Something went wrong generating this one. Delete and try again.</p>
       ) : (
         <Link to={`/content/${article._id}`} className="btn soft block">
-          Read article <ArrowRight size={15} />
+          {isPost ? 'View post' : 'Read article'} <ArrowRight size={15} />
         </Link>
       )}
     </article>
