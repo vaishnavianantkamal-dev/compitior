@@ -19,21 +19,32 @@ You are evidence-first: facts about competitors must come from the research data
 If something is not in the data, write "unknown" instead of guessing.
 You always reply with a single valid JSON object and nothing else - no markdown fences, no commentary.`;
 
-// Calls Claude and parses JSON. Retries once with a repair instruction if parsing fails.
+// Calls Claude and parses JSON. Retries with a repair instruction if parsing fails; if the
+// reply was cut off by the token limit, also asks for shorter fields and raises the budget,
+// since a fixed max_tokens guess can't account for how verbose the model decides to be.
 export async function askJson(prompt, { maxTokens = 4000, system = BASE_SYSTEM } = {}) {
   const messages = [{ role: 'user', content: prompt }];
+  let budget = maxTokens;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const msg = await getClient().messages.create({ model: model(), max_tokens: maxTokens, system, messages });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const msg = await getClient().messages.create({ model: model(), max_tokens: budget, system, messages });
     const text = msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
     try {
       return extractJson(text);
     } catch (err) {
-      if (attempt === 1 || msg.stop_reason === 'max_tokens') {
+      if (attempt === 2) {
         throw new Error(`Claude returned unusable JSON (${err.message}). stop_reason=${msg.stop_reason}`);
       }
       messages.push({ role: 'assistant', content: text });
-      messages.push({ role: 'user', content: 'That was not valid JSON. Reply again with ONLY the JSON object.' });
+      if (msg.stop_reason === 'max_tokens') {
+        budget = Math.round(budget * 1.6);
+        messages.push({
+          role: 'user',
+          content: 'That got cut off before the JSON finished. Reply again with ONLY the JSON object, but make every text field much shorter (a few words each) so the whole thing fits.',
+        });
+      } else {
+        messages.push({ role: 'user', content: 'That was not valid JSON. Reply again with ONLY the JSON object.' });
+      }
     }
   }
 }
@@ -81,14 +92,15 @@ Pick up to ${maxCompetitors} real companies/brands that compete with this busine
 Rules: use each brand's own website (not Amazon/Flipkart/news/Wikipedia/research pages) when available;
 if a brand only appears on a marketplace, keep the marketplace URL and set "channel":"marketplace".
 Skip the business itself. Prefer a mix of direct and indirect, home-market and international.
+Keep every field short - "why" is at most 8 words, no extra commentary anywhere.
 Return JSON:
 {
   "competitors": [
-    { "name": "", "url": "", "type": "direct|indirect", "region": "home|international", "channel": "own-site|marketplace", "why": "one line" }
+    { "name": "", "url": "", "type": "direct|indirect", "region": "home|international", "channel": "own-site|marketplace", "why": "max 8 words" }
   ],
   "notInResults": ["well-known competitors you expected but did not see in the results (names only)"]
 }`,
-    { maxTokens: 4000 }
+    { maxTokens: 5000 }
   );
 }
 
