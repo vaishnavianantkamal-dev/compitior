@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { MoreVertical, ArrowRight, Bookmark, Trash2, MapPin, Tag } from 'lucide-react';
 import ScoreRing from './ScoreRing.jsx';
 import { api } from '../api.js';
-import { avatarHue, formatDate, industryIcon } from '../utils.js';
+import { avatarHue, formatDate, industryIcon, industryPhoto } from '../utils.js';
 
 export default function AnalysisCard({ item, onChanged }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const b = item.business || {};
   const score = item.viability?.score;
   const isRunning = !['done', 'failed'].includes(item.status);
-  const Icon = industryIcon(b.industry);
 
   async function toggleSave(e) {
     e.preventDefault();
@@ -30,9 +29,7 @@ export default function AnalysisCard({ item, onChanged }) {
   return (
     <article className="a-card">
       <div className="a-card-top">
-        <span className="a-thumb" style={{ background: `linear-gradient(150deg, hsl(${avatarHue(b.name)} 55% 42%), hsl(${avatarHue(b.name)} 55% 28%))` }}>
-          <Icon size={20} />
-        </span>
+        <BusinessThumb business={b} />
         <div className="a-card-title">
           <strong>{b.name}</strong>
           {b.location && <span className="muted a-card-line"><MapPin size={11} /> {b.location}</span>}
@@ -77,6 +74,20 @@ export default function AnalysisCard({ item, onChanged }) {
       </Link>
     </article>
   );
+}
+
+function BusinessThumb({ business: b }) {
+  const [failed, setFailed] = useState(false);
+  const Icon = industryIcon(b.industry);
+
+  if (failed) {
+    return (
+      <span className="a-thumb" style={{ background: `linear-gradient(150deg, hsl(${avatarHue(b.name)} 55% 42%), hsl(${avatarHue(b.name)} 55% 28%))` }}>
+        <Icon size={20} />
+      </span>
+    );
+  }
+  return <img className="a-thumb a-thumb-photo" src={industryPhoto(b.industry)} onError={() => setFailed(true)} alt="" />;
 }
 
 function Stat({ value, label }) {
