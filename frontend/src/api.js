@@ -27,4 +27,10 @@ export const api = {
   insightsSummary: () => request('/insights/summary'),
   getConfig: () => request('/config'),
   updateConfig: (fields) => request('/config', { method: 'POST', body: fields }),
+  suggestTopics: (seed) => request('/content/topics', { method: 'POST', body: { seed } }),
+  listArticles: () => request('/content/articles'),
+  createArticle: (topic, analysisId) => request('/content/articles', { method: 'POST', body: { topic, analysisId } }),
+  getArticle: (id) => request(`/content/articles/${id}`),
+  removeArticle: (id) => request(`/content/articles/${id}`, { method: 'DELETE' }),
+  articleMarkdownUrl: (id) => `/api/content/articles/${id}/markdown`,
 };

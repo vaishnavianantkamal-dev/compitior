@@ -154,3 +154,44 @@ Avoid health or medical cure claims in posts.`,
     { maxTokens: 12000 }
   );
 }
+
+// Content Studio: suggest blog topic headlines for a niche.
+export function suggestTopics(seed, count = 10) {
+  return askJson(
+    `Suggest ${count} sharp, specific blog post topic headlines for this niche:
+"${seed || 'AI-powered business validation, market research and competitor analysis for startup founders'}"
+
+Rules: each headline should be something a founder would actually click and share, no generic filler like "The Importance of X".
+Return JSON:
+{ "topics": ["headline 1", "headline 2", ...] }`,
+    { maxTokens: 1000 }
+  );
+}
+
+// Content Studio: write a full long-form article plus matching social posts for one topic.
+export function writeArticle(topic, businessContext = '') {
+  return askJson(
+    `Write a complete, publish-ready blog article.
+
+TOPIC: ${topic}
+${businessContext ? `\nWrite this for/about the following business - use it for concrete examples and a natural call to action:\n${businessContext}\n` : '\nThis is a general business/startup audience piece - no specific company to promote.\n'}
+
+Write in a practical, specific, non-generic voice for founders and entrepreneurs. Use real reasoning and concrete examples, not vague platitudes.
+Also write 3 short social captions that promote this article on Instagram, LinkedIn and X.
+
+Return JSON with exactly this shape:
+{
+  "title": "a strong, specific headline (sharper than the topic, not identical to it)",
+  "metaDescription": "150-160 character SEO meta description",
+  "tags": ["5-8 relevant tags"],
+  "content": "the full article body in Markdown, 900-1400 words, using ## headings, an intro, 3-5 sections, and a short conclusion with a call to action",
+  "posts": [
+    { "platform": "instagram", "goal": "", "caption": "", "hashtags": [""] },
+    { "platform": "linkedin", "goal": "", "caption": "", "hashtags": [""] },
+    { "platform": "x", "goal": "", "caption": "", "hashtags": [""] }
+  ]
+}
+Avoid health or medical cure claims.`,
+    { maxTokens: 6000 }
+  );
+}

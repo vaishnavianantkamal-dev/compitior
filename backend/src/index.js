@@ -13,6 +13,7 @@ import analysisRoutes from './routes/analysis.routes.js';
 import publicRoutes from './routes/public.routes.js';
 import insightsRoutes from './routes/insights.routes.js';
 import configRoutes from './routes/config.routes.js';
+import contentRoutes from './routes/content.routes.js';
 import Analysis from './models/Analysis.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // New analyses cost Apify + Claude credits, so cap how often they can be started.
 const createLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
 app.post('/api/analyses', createLimiter);
+app.post('/api/content/articles', createLimiter);
 
 app.get('/api/health', (req, res) =>
   res.json({
@@ -40,6 +42,7 @@ app.use('/api/analyses', analysisRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/content', contentRoutes);
 
 // Serve the built React app in production
 const clientDist = path.resolve(__dirname, '../../frontend/dist');

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Lightbulb, History, Users2, BarChart3, Bookmark, Settings, HelpCircle, Sparkles,
+  LayoutDashboard, Lightbulb, History, Users2, BarChart3, Bookmark, Settings, HelpCircle, Sparkles, PenSquare,
 } from 'lucide-react';
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/past-analyses', label: 'Past Analyses', icon: History },
   { to: '/competitors', label: 'Competitors', icon: Users2 },
   { to: '/market-insights', label: 'Market Insights', icon: BarChart3 },
+  { to: '/content', label: 'Content Studio', icon: PenSquare },
   { to: '/saved-ideas', label: 'Saved Ideas', icon: Bookmark },
 ];
 

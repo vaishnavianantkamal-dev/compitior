@@ -3,6 +3,7 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Layers, Sparkles, MapPin, Link2, Users, DollarSign, Users2, ArrowRight, Clock } from 'lucide-react';
 import { api } from '../api.js';
 import AnalysisCard from '../components/AnalysisCard.jsx';
+import HeroArt from '../components/HeroArt.jsx';
 
 const EMPTY = {
   name: '', description: '', industry: '', location: '', website: '',
@@ -63,14 +64,10 @@ export default function Home() {
             websites and gives you a detailed report.
           </p>
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="hero-art-card">
-            <div className="art-line" /><div className="art-line short" />
-            <div className="art-bars"><span style={{ height: '40%' }} /><span style={{ height: '65%' }} /><span style={{ height: '50%' }} /><span style={{ height: '85%' }} /></div>
-          </div>
-          <div className="float-badge badge-1"><Sparkles size={15} /><div><strong>Market Opportunities</strong><span>5 new gaps found</span></div></div>
-          <div className="float-badge badge-2"><Users2 size={15} /><div><strong>Competitor Analysis</strong><span>12 competitors</span></div></div>
-        </div>
+        <HeroArt badges={[
+          { icon: Sparkles, title: 'Market Opportunities', detail: `${filtered.reduce((s, a) => s + (a.gapsCount || 0), 0)} gaps found` },
+          { icon: Users2, title: 'Competitor Analysis', detail: `${filtered.reduce((s, a) => s + (a.competitorsCount || 0), 0)} competitors` },
+        ]} />
       </section>
 
       <div className="idea-columns">

@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MoreVertical, ArrowRight, Bookmark, Trash2 } from 'lucide-react';
+import { MoreVertical, ArrowRight, Bookmark, Trash2, MapPin, Tag } from 'lucide-react';
 import ScoreRing from './ScoreRing.jsx';
 import { api } from '../api.js';
-import { initials, avatarHue, formatDate } from '../utils.js';
+import { avatarHue, formatDate, industryIcon } from '../utils.js';
 
 export default function AnalysisCard({ item, onChanged }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const b = item.business || {};
   const score = item.viability?.score;
   const isRunning = !['done', 'failed'].includes(item.status);
+  const Icon = industryIcon(b.industry);
 
   async function toggleSave(e) {
     e.preventDefault();
@@ -29,12 +30,13 @@ export default function AnalysisCard({ item, onChanged }) {
   return (
     <article className="a-card">
       <div className="a-card-top">
-        <span className="a-thumb" style={{ background: `hsl(${avatarHue(b.name)} 45% 40%)` }}>
-          {initials(b.name)}
+        <span className="a-thumb" style={{ background: `linear-gradient(150deg, hsl(${avatarHue(b.name)} 55% 42%), hsl(${avatarHue(b.name)} 55% 28%))` }}>
+          <Icon size={20} />
         </span>
         <div className="a-card-title">
           <strong>{b.name}</strong>
-          <span className="muted">{[b.location, b.industry].filter(Boolean).join(' · ') || 'Business'}</span>
+          {b.location && <span className="muted a-card-line"><MapPin size={11} /> {b.location}</span>}
+          <span className="muted a-card-line"><Tag size={11} /> {b.industry || 'Business'}</span>
         </div>
         <span className="a-card-date muted">{formatDate(item.createdAt)}</span>
         <div className="a-card-menu">
@@ -70,7 +72,7 @@ export default function AnalysisCard({ item, onChanged }) {
         </div>
       )}
 
-      <Link to={`/analysis/${item._id}`} className="btn ghost block">
+      <Link to={`/analysis/${item._id}`} className="btn soft block">
         View Full Report <ArrowRight size={15} />
       </Link>
     </article>

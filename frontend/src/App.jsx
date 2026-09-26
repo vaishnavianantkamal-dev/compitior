@@ -6,6 +6,8 @@ import PastAnalyses from './pages/PastAnalyses.jsx';
 import Competitors from './pages/Competitors.jsx';
 import MarketInsights from './pages/MarketInsights.jsx';
 import SavedIdeas from './pages/SavedIdeas.jsx';
+import Content from './pages/Content.jsx';
+import ArticleView from './pages/ArticleView.jsx';
 import Settings from './pages/Settings.jsx';
 import HelpSupport from './pages/HelpSupport.jsx';
 import ReportPage from './pages/ReportPage.jsx';
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="/competitors" element={<Competitors />} />
         <Route path="/market-insights" element={<MarketInsights />} />
         <Route path="/saved-ideas" element={<SavedIdeas />} />
+        <Route path="/content" element={<Content />} />
+        <Route path="/content/:id" element={<ArticleView />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<HelpSupport />} />
         <Route path="/analysis/:id" element={<ReportPage />} />

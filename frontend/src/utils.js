@@ -19,6 +19,26 @@ export function avatarHue(seed = '') {
   return AVATAR_HUES[hash % AVATAR_HUES.length];
 }
 
+import {
+  Coffee, Dumbbell, Sparkles, Laptop, Home as HomeIcon, ShoppingBag, GraduationCap, UtensilsCrossed, Building2,
+} from 'lucide-react';
+
+const INDUSTRY_ICONS = [
+  [/food|beverage|cafe|coffee|restaurant/i, Coffee],
+  [/delivery|qsr|kitchen/i, UtensilsCrossed],
+  [/fitness|wellness|gym|health/i, Dumbbell],
+  [/beauty|personal care|cosmetic/i, Sparkles],
+  [/edtech|education|learning/i, GraduationCap],
+  [/tech|saas|software/i, Laptop],
+  [/home|furniture|decor|living/i, HomeIcon],
+  [/fashion|apparel|retail/i, ShoppingBag],
+];
+
+export function industryIcon(industry = '') {
+  const hit = INDUSTRY_ICONS.find(([re]) => re.test(industry));
+  return hit ? hit[1] : Building2;
+}
+
 export function formatDate(value) {
   if (!value) return '';
   return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
