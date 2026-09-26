@@ -42,7 +42,7 @@ app.use('/api/insights', insightsRoutes);
 app.use('/api/config', configRoutes);
 
 // Serve the built React app in production
-const clientDist = path.resolve(__dirname, '../../client/dist');
+const clientDist = path.resolve(__dirname, '../../frontend/dist');
 if (fs.existsSync(clientDist)) {
   app.use(express.static(clientDist));
   app.get(/^\/(?!api).*/, (req, res) => res.sendFile(path.join(clientDist, 'index.html')));
